@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Comparative Test Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f7; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: #111; }
+        .charts { display: grid; grid-template-columns: 1fr; gap: 40px; margin-bottom: 30px; margin-top: 40px; }
+        .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #fafafa; font-weight: bold; color: #555; }
+        tr:last-child td { border-bottom: none; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; color: white; display: inline-block; font-size: 12px; }
+        .badge.pass { background-color: #34c759; }
+        .badge.fail { background-color: #ff3b30; }
+        .timestamp { color: #888; font-size: 14px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LLM Comparative Test Report</h1>
+        <p class="timestamp">Generated on 2026-04-12 18:23:52</p>
+
+        <table>
+            <tr>
+                <th>Scenario</th>
+                <th>Target Model</th>
+                <th>Users</th>
+                <th>Avg Latency</th>
+                <th>Throughput</th>
+                <th>Pass Rate</th>
+                <th>Status</th>
+            </tr>
+    
+            <tr>
+                <td>vLLM (RTX 5070 Native) Sweep</td>
+                <td>Qwen/Qwen2.5-3B-Instruct</td>
+                <td>5</td>
+                <td>260ms</td>
+                <td>61.6 tok/s</td>
+                <td>100%</td>
+                <td><span class='badge pass'>PASSED</span></td>
+            </tr>
+        
+            <tr>
+                <td>Ollama (Background Service) Sweep</td>
+                <td>llama3.2:latest</td>
+                <td>5</td>
+                <td>1426ms</td>
+                <td>12.1 tok/s</td>
+                <td>100%</td>
+                <td><span class='badge pass'>PASSED</span></td>
+            </tr>
+        
+            <tr>
+                <td>llama.cpp (Q4 GGUF) Sweep</td>
+                <td>Llama-3.2-3B-Instruct-Q4_K_M.gguf</td>
+                <td>5</td>
+                <td>2343ms</td>
+                <td>6.0 tok/s</td>
+                <td>100%</td>
+                <td><span class='badge pass'>PASSED</span></td>
+            </tr>
+        
+        </table>
+
+        <div class="charts">
+            <div class="chart-container">
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="throughputChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const data = {"labels": ["vLLM (RTX 5070 Native) Sweep (Qwen/Qwen2.5-3B-Instruct)", "Ollama (Background Service) Sweep (llama3.2:latest)", "llama.cpp (Q4 GGUF) Sweep (Llama-3.2-3B-Instruct-Q4_K_M.gguf)"], "latencies": [259.9302065995289, 1425.7322097982978, 2342.8550943994196], "throughputs": [61.55498512202929, 12.06397658816541, 5.975614980826989], "passRates": [100.0, 100.0, 100.0]};
+            
+            new Chart(document.getElementById('latencyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Avg Latency (ms) - Lower is Better',
+                        data: data.latencies,
+                        backgroundColor: '#ff9500'
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Comparative Latency' } } }
+            });
+
+            new Chart(document.getElementById('throughputChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Throughput (tok/s) - Higher is Better',
+                        data: data.throughputs,
+                        backgroundColor: '#34c759'
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Comparative Throughput' } } }
+            });
+        </script>
+    </div>
+</body>
+</html>
+    

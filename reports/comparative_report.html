@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Comparative Test Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f7; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: #111; }
+        .charts { display: grid; grid-template-columns: 1fr; gap: 40px; margin-bottom: 30px; margin-top: 40px; }
+        .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #fafafa; font-weight: bold; color: #555; }
+        tr:last-child td { border-bottom: none; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; color: white; display: inline-block; font-size: 12px; }
+        .badge.pass { background-color: #34c759; }
+        .badge.fail { background-color: #ff3b30; }
+        .timestamp { color: #888; font-size: 14px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LLM Comparative Test Report</h1>
+        <p class="timestamp">Generated on 2026-04-12 15:05:59</p>
+
+        <table>
+            <tr>
+                <th>Scenario</th>
+                <th>Target Model</th>
+                <th>Users</th>
+                <th>Avg Latency</th>
+                <th>Throughput</th>
+                <th>Pass Rate</th>
+                <th>Status</th>
+            </tr>
+    
+            <tr>
+                <td>Gemini 2.5 Flash Load test (User 1)</td>
+                <td>gemini-2.5-flash</td>
+                <td>1</td>
+                <td>0ms</td>
+                <td>0.0 tok/s</td>
+                <td>0%</td>
+                <td><span class='badge fail'>FAILED</span></td>
+            </tr>
+        
+            <tr>
+                <td>Gemini 2.5 Flash Load test (User 3)</td>
+                <td>gemini-2.5-flash</td>
+                <td>3</td>
+                <td>0ms</td>
+                <td>0.0 tok/s</td>
+                <td>0%</td>
+                <td><span class='badge fail'>FAILED</span></td>
+            </tr>
+        
+            <tr>
+                <td>Gemini 2.5 Flash Load test (User 5)</td>
+                <td>gemini-2.5-flash</td>
+                <td>5</td>
+                <td>0ms</td>
+                <td>0.0 tok/s</td>
+                <td>0%</td>
+                <td><span class='badge fail'>FAILED</span></td>
+            </tr>
+        
+        </table>
+
+        <div class="charts">
+            <div class="chart-container">
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="throughputChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const data = {"labels": ["Gemini 2.5 Flash Load test (User 1) (gemini-2.5-flash)", "Gemini 2.5 Flash Load test (User 3) (gemini-2.5-flash)", "Gemini 2.5 Flash Load test (User 5) (gemini-2.5-flash)"], "latencies": [0.0, 0.0, 0.0], "throughputs": [0.0, 0.0, 0.0], "passRates": [0.0, 0.0, 0.0]};
+            
+            new Chart(document.getElementById('latencyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Avg Latency (ms) - Lower is Better',
+                        data: data.latencies,
+                        backgroundColor: '#ff9500'
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Comparative Latency' } } }
+            });
+
+            new Chart(document.getElementById('throughputChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Throughput (tok/s) - Higher is Better',
+                        data: data.throughputs,
+                        backgroundColor: '#34c759'
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Comparative Throughput' } } }
+            });
+        </script>
+    </div>
+</body>
+</html>
+    
