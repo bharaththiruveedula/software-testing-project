@@ -1,0 +1,40 @@
+[project]
+name = "llm-load-tester"
+version = "1.0.0"
+description = "Python-Based LLM Inference Load and Validation Suite"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp>=3.9.0",
+    "jsonschema>=4.20.0",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+llm-tester = "llm_tester:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "aioresponses>=0.7.6",
+    "pytest-mock>=3.15.1",
+    "pytest-cov>=7.1.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+markers = [
+    "integration: marks tests as integration tests that require a live server (deselect with '-m \"not integration\"')",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "venv/*", ".venv/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+]

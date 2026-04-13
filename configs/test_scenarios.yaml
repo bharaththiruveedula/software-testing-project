@@ -1,0 +1,27 @@
+scenarios:
+  - name: "Gemini 2.5 Flash Load test (User 1)"
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    model: "gemini-2.5-flash"
+    users: 1
+    prompt: "Write a haiku about LLM load testing."
+    stagger: 0
+    threshold: 0.90
+    temperature: 0.7
+
+  - name: "Gemini 2.5 Flash Load test (User 3)"
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    model: "gemini-2.5-flash"
+    users: 3
+    prompt: "Write a haiku about LLM load testing."
+    stagger: 1000
+    threshold: 0.90
+    temperature: 0.7
+
+  - name: "Gemini 2.5 Flash Load test (User 5)"
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    model: "gemini-2.5-flash"
+    users: 5
+    prompt: "Write a haiku about LLM load testing."
+    stagger: 2000
+    threshold: 0.90
+    temperature: 0.7
