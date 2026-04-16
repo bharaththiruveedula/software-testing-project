@@ -319,7 +319,7 @@ def generate_comparison_report(
     pass_rates = []
     
     for m in metrics:
-        name = f"{m.scenario_name} ({m.target})"
+        name = f"{escape(m.scenario_name)} ({escape(m.target)})"
         labels.append(name)
         latencies.append(m.avg_latency)
         throughputs.append(m.throughput)
