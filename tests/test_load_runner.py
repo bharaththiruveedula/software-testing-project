@@ -334,3 +334,27 @@ class TestRunLoadTest:
 
         for r in result.tracker.results:
             assert r.latency_ms > 0
+
+    @pytest.mark.asyncio
+    async def test_streaming_response_is_preserved(self):
+        """Ensure stream-mode reconstructed payload is not overwritten."""
+        sse_body = (
+            'data: {"choices":[{"delta":{"content":"hello stream"}}]}\n\n'
+            "data: [DONE]\n\n"
+        )
+
+        with aioresponses() as m:
+            m.post(TEST_CHAT_URL, status=200, body=sse_body)
+
+            result = await run_load_test(
+                url=TEST_CHAT_URL,
+                num_users=1,
+                prompt="test",
+                schema=None,
+                stream=True,
+            )
+
+        assert result.tracker.successful_requests == 1
+        assert result.raw_responses[0] is not None
+        assert "hello stream" in result.raw_responses[0]
+        assert result.tracker.results[0].ttft_ms is not None

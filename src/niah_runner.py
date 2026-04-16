@@ -1,5 +1,4 @@
 import asyncio
-import time
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -46,7 +45,7 @@ async def run_niah_test(
     temperature: float,
     api_key: Optional[str],
     stream: bool,
-) -> dict:
+) -> NIAHTestResult:
     """
     Execute the Needle In A Haystack context expansion test.
     """

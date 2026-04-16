@@ -133,8 +133,6 @@ async def _send_request(
                         first_chunk = False
                     chunks.append(chunk)
                 response_text = b"".join(chunks).decode("utf-8", errors="replace")
-
-            response_text = b"".join(chunks).decode("utf-8", errors="replace")
             latency_ms = (time.perf_counter() - start_time) * 1000
 
             if response.status >= 400:

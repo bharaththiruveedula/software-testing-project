@@ -6,19 +6,23 @@ for test results.
 """
 
 import json
-from base64 import b64encode
+from html import escape
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from load_runner import LoadTestResult
 from comparator import ComparisonMetric
+
+if TYPE_CHECKING:
+    from niah_runner import NIAHTestResult
+    from ramp_runner import RampTestResult
 
 # To avoid circular imports if any, but better use string annotations or direct import
 def generate_html_report(
     result: LoadTestResult,
     output_path: str = "report.html",
     pass_rate_threshold: float = 0.95,
-    ramp_result: Optional[any] = None,  # Optional["RampTestResult"]
+    ramp_result: Optional["RampTestResult"] = None,
 ) -> None:
     """
     Generate an HTML report with charts for the load test results.
@@ -191,7 +195,8 @@ def generate_html_report(
             <tr><th>#</th><th>Error Detail</th></tr>
         """
         for i, val in enumerate(failed_vals, 1):
-            html_content += f"<tr><td>{i}</td><td class='status-err'>{val.error_message}</td></tr>"
+            safe_msg = escape(val.error_message or "Unknown error")
+            html_content += f"<tr><td>{i}</td><td class='status-err'>{safe_msg}</td></tr>"
         html_content += "</table>"
     else:
         html_content += "<p>No validation failures.</p>"
@@ -368,11 +373,13 @@ def generate_comparison_report(
     """
     
     for m in metrics:
+        safe_scenario_name = escape(m.scenario_name)
+        safe_target = escape(m.target)
         status_badge = "<span class='badge pass'>PASSED</span>" if m.passed else "<span class='badge fail'>FAILED</span>"
         html_content += f"""
             <tr>
-                <td>{m.scenario_name}</td>
-                <td>{m.target}</td>
+                <td>{safe_scenario_name}</td>
+                <td>{safe_target}</td>
                 <td>{m.users}</td>
                 <td>{m.avg_latency:.0f}ms</td>
                 <td>{m.throughput:.1f} tok/s</td>
@@ -434,7 +441,7 @@ def generate_comparison_report(
 
 
 def generate_niah_html_report(
-    niah_result: any, # NIAHTestResult
+    niah_result: "NIAHTestResult",
     output_path: str = "niah_report.html",
 ) -> None:
     """Generate an HTML report for NIAH Context Scaling results."""
