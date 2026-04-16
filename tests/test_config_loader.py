@@ -92,3 +92,57 @@ def test_invalid_yaml(tmp_path):
 
     with pytest.raises(ValueError, match="Failed to read YAML config"):
         load_config(str(config_file))
+
+
+def test_invalid_users_raises_error(tmp_path):
+    yaml_content = """
+    scenarios:
+      - name: "Bad users"
+        url: "http://test-url"
+        users: 0
+    """
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text(yaml_content)
+
+    with pytest.raises(ValueError, match="invalid 'users' value"):
+        load_config(str(config_file))
+
+
+def test_invalid_threshold_raises_error(tmp_path):
+    yaml_content = """
+    scenarios:
+      - name: "Bad threshold"
+        url: "http://test-url"
+        threshold: 1.2
+    """
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text(yaml_content)
+
+    with pytest.raises(ValueError, match="invalid 'threshold' value"):
+        load_config(str(config_file))
+
+
+def test_invalid_stagger_raises_error(tmp_path):
+    yaml_content = """
+    scenarios:
+      - name: "Bad stagger"
+        url: "http://test-url"
+        stagger: -1
+    """
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text(yaml_content)
+
+    with pytest.raises(ValueError, match="invalid 'stagger' value"):
+        load_config(str(config_file))
+
+
+def test_scenarios_must_be_list(tmp_path):
+    yaml_content = """
+    scenarios:
+      name: "not-a-list"
+    """
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text(yaml_content)
+
+    with pytest.raises(ValueError, match="'scenarios' must be a list"):
+        load_config(str(config_file))
