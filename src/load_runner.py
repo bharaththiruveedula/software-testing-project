@@ -9,7 +9,7 @@ OpenAI-compatible inference server, measuring latency and TTFT
 import asyncio
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Iterable, Iterator, List, Optional
 
 import aiohttp
 
@@ -23,6 +23,74 @@ class LoadTestResult:
     tracker: PerformanceTracker
     validation_results: List[ValidationResult]
     raw_responses: List[Optional[str]]
+
+
+@dataclass
+class SSEEvent:
+    """A single parsed Server-Sent Event.
+
+    For OpenAI streaming, ``data`` is either a JSON string (a chunk payload)
+    or the literal sentinel ``"[DONE]"``.
+    """
+    data: str
+
+
+class SSEParser:
+    """Incremental SSE parser that buffers bytes across chunk boundaries.
+
+    The aiohttp response iterator hands us arbitrary byte chunks — a single
+    ``data: ...\\n\\n`` event may arrive split across two chunks, or several
+    events may arrive packed into one chunk. Feed raw bytes in; consume
+    complete events via the returned iterator. Call :meth:`flush` at EOF.
+    """
+
+    def __init__(self) -> None:
+        self._buffer = b""
+
+    def feed(self, chunk: bytes) -> Iterator[SSEEvent]:
+        if chunk:
+            self._buffer += chunk
+        while b"\n\n" in self._buffer:
+            raw, self._buffer = self._buffer.split(b"\n\n", 1)
+            ev = self._parse_block(raw)
+            if ev is not None:
+                yield ev
+
+    def flush(self) -> Iterator[SSEEvent]:
+        if self._buffer.strip():
+            ev = self._parse_block(self._buffer)
+            self._buffer = b""
+            if ev is not None:
+                yield ev
+
+    @staticmethod
+    def _parse_block(raw: bytes) -> Optional[SSEEvent]:
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+        data_parts: List[str] = []
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith(":"):
+                continue
+            if line.startswith("data:"):
+                data_parts.append(line.removeprefix("data:").strip())
+        if not data_parts:
+            return None
+        return SSEEvent(data="\n".join(data_parts))
+
+
+def parse_sse_stream(chunks: Iterable[bytes]) -> Iterator[SSEEvent]:
+    """Pure convenience wrapper: feed an iterable of byte chunks, yield events.
+
+    Useful for unit testing without aiohttp — hand it static byte lists and
+    assert the event sequence.
+    """
+    parser = SSEParser()
+    for chunk in chunks:
+        yield from parser.feed(chunk)
+    yield from parser.flush()
 
 
 async def _send_request(
@@ -58,67 +126,59 @@ async def _send_request(
             timeout=timeout,
             headers=headers,
         ) as response:
-            # If streaming is supported, measure TTFT from the first chunk
+            # If streaming is supported, measure TTFT from the first event
             chunks = []
             if payload.get("stream", False):
                 import json
-                
-                first_chunk = True
+
+                parser = SSEParser()
+                first_event = True
                 most_recent_timestamp = start_time
                 itl_ms_list = []
                 generated_text = ""
                 final_usage = None
-                
+                done = False
+
                 async for chunk_bytes in response.content:
-                    chunk_bytes = chunk_bytes.strip()
-                    if not chunk_bytes:
-                        continue
-                    
-                    try:
-                        decoded = chunk_bytes.decode("utf-8")
-                    except UnicodeDecodeError:
-                        continue
-                        
-                    if decoded.startswith(":"): # ping
-                        continue
-                    
-                    if decoded.startswith("data:"):
-                        chunk_str = decoded.removeprefix("data:").strip()
-                        if chunk_str == "[DONE]":
+                    if done:
+                        break
+                    for ev in parser.feed(chunk_bytes):
+                        if ev.data == "[DONE]":
+                            done = True
                             break
-                        
+
                         try:
-                            data = json.loads(chunk_str)
-                            timestamp = time.perf_counter()
-                            
-                            # Parse token data
-                            if "choices" in data and data["choices"]:
-                                choice = data["choices"][0]
-                                content = ""
-                                if "delta" in choice and "content" in choice["delta"]:
-                                    content = choice["delta"]["content"]
-                                elif "text" in choice:
-                                    content = choice["text"]
-                                    
-                                if content:
-                                    generated_text += str(content)
-                                    
-                                if first_chunk:
-                                    ttft_ms = (timestamp - start_time) * 1000
-                                    first_chunk = False
-                                else:
-                                    itl_ms_list.append((timestamp - most_recent_timestamp) * 1000)
-                                    
-                                most_recent_timestamp = timestamp
-                            
-                            if "usage" in data and data["usage"]:
-                                final_usage = data["usage"]
+                            data = json.loads(ev.data)
                         except json.JSONDecodeError:
-                            pass
-                
+                            continue
+
+                        timestamp = time.perf_counter()
+
+                        if "choices" in data and data["choices"]:
+                            choice = data["choices"][0]
+                            content = ""
+                            if "delta" in choice and "content" in choice["delta"]:
+                                content = choice["delta"]["content"]
+                            elif "text" in choice:
+                                content = choice["text"]
+
+                            if content:
+                                generated_text += str(content)
+
+                            if first_event:
+                                ttft_ms = (timestamp - start_time) * 1000
+                                first_event = False
+                            else:
+                                itl_ms_list.append((timestamp - most_recent_timestamp) * 1000)
+
+                            most_recent_timestamp = timestamp
+
+                        if "usage" in data and data["usage"]:
+                            final_usage = data["usage"]
+
                 if itl_ms_list:
                     tpot_ms = sum(itl_ms_list) / len(itl_ms_list)
-                    
+
                 # Reconstruct a faux OpenAI JSON response internally for the validator
                 faux_payload = {
                     "choices": [{"message": {"content": generated_text}}],
@@ -289,32 +349,42 @@ def _build_completions_payload(
     prompt: str,
     model: str,
     temperature: float,
+    max_tokens: int = 512,
+    stop: Optional[List[str]] = None,
 ) -> dict:
     """Build a request payload for the /v1/completions endpoint."""
-    return {
+    payload = {
         "model": model,
         "prompt": prompt,
-        "max_tokens": 512,
+        "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": False,
     }
+    if stop:
+        payload["stop"] = list(stop)
+    return payload
 
 
 def _build_chat_payload(
     prompt: str,
     model: str,
     temperature: float,
+    max_tokens: int = 512,
+    stop: Optional[List[str]] = None,
 ) -> dict:
     """Build a request payload for the /v1/chat/completions endpoint."""
-    return {
+    payload = {
         "model": model,
         "messages": [
             {"role": "user", "content": prompt},
         ],
-        "max_tokens": 512,
+        "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": False,
     }
+    if stop:
+        payload["stop"] = list(stop)
+    return payload
 
 
 async def _staggered_request(
@@ -354,6 +424,8 @@ async def run_load_test(
     api_key: Optional[str] = None,
     stagger_ms: float = 0.0,
     stream: bool = False,
+    max_tokens: int = 512,
+    stop: Optional[List[str]] = None,
 ) -> LoadTestResult:
     """
     Execute a concurrent load test against the given inference server URL.
@@ -378,9 +450,9 @@ async def run_load_test(
 
     # Detect endpoint type based on URL
     if "chat/completions" in url:
-        payload = _build_chat_payload(prompt, model, temperature)
+        payload = _build_chat_payload(prompt, model, temperature, max_tokens=max_tokens, stop=stop)
     else:
-        payload = _build_completions_payload(prompt, model, temperature)
+        payload = _build_completions_payload(prompt, model, temperature, max_tokens=max_tokens, stop=stop)
         
     if stream:
         payload["stream"] = True
