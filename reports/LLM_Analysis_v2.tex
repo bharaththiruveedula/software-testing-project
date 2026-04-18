@@ -115,9 +115,9 @@ the eight test suites.
   \node[comp,below=2mm of loadrun,minimum width=72mm] (stat)
      {stat\_regression (bootstrap\,CI, Mann--Whitney $U$)};
   \node[test,below=2mm of stat,minimum width=34mm,align=center]
-     (act2) {Act 2 — eight server-centric\\tests (contract, protocol, \dots)};
+     (act2) {Eight server-centric tests\\(contract, protocol, \dots)};
   \node[test,right=of act2,minimum width=34mm,align=center]
-     (act3) {Act 3 — calibration,\\property, mutation};
+     (act3) {Trustworthy-tooling layer\\(calibration, property, mutation)};
   \begin{scope}[on background layer]
     \node[fit=(vllm)(llcpp),draw,dashed,inner sep=1.5mm,label={[font=\scriptsize]above:LLM inference servers (SUT)}] {};
   \end{scope}
@@ -129,11 +129,11 @@ the eight test suites.
   \draw[->] (stat.south) -- (act3.north);
 \end{tikzpicture}
 \caption{Harness architecture. The statistical harness feeds both the
-server-centric tests (Act~2) and the trustworthy-tooling layer (Act~3).}
+server-centric test suite and the trustworthy-tooling layer.}
 \label{fig:arch}
 \end{figure}
 
-\section{Server-Centric Test Methodology (Act~2)}
+\section{Server-Centric Test Methodology}
 Table~\ref{tab:methodology} maps each test to a named software-testing
 methodology and to precedent from established LLM-serving projects.
 Figure~\ref{fig:map} positions the eight tests along two axes---whether they
@@ -142,7 +142,7 @@ backend or multiple.
 
 \begin{table*}[t]
 \centering
-\caption{Eight server-centric tests layered on the existing harness (Act~2).}
+\caption{Eight server-centric tests layered on the existing harness.}
 \label{tab:methodology}
 \small
 \begin{tabular}{@{}p{2.8cm}p{3.0cm}p{3.1cm}p{6.8cm}@{}}
@@ -200,13 +200,13 @@ Invalid bearer\,$\Rightarrow$\,401; malformed JSON\,$\Rightarrow$\,4xx
     \node[draw,rounded corners=2pt,fill=yellow!20,inner sep=2pt] at (\x,\y) {\l};
   }
 \end{tikzpicture}
-\caption{Coverage map for Act~2. Tests on the right-hand side consume
+\caption{Coverage map for the server-centric test suite. Tests on the right-hand side consume
 multiple backends; tests higher on the y-axis exercise richer behavioural
 invariants.}
 \label{fig:map}
 \end{figure}
 
-\section{Trustworthy-Tooling Layer (Act~3)}
+\section{Trustworthy-Tooling Layer}
 \subsection{Measurement calibration}
 An in-process \texttt{aiohttp} server emits a deterministic SSE stream with
 configurable pre-first-chunk and inter-chunk delays (see
@@ -339,17 +339,17 @@ local backend is reachable.
 \toprule
 \textbf{Suite} & \textbf{Tests} & \textbf{Role} \\
 \midrule
-\texttt{test\_contract.py}              & 8 & Act 2 \#1 \\
-\texttt{test\_streaming\_protocol.py}   & 6 & Act 2 \#2 \\
-\texttt{test\_param\_honoring.py}       & 9 & Act 2 \#3 \\
-\texttt{test\_determinism.py}           & 2 & Act 2 \#4 \\
-\texttt{test\_stat\_regression.py}      & 5 & Act 2 \#5 \\
-\texttt{test\_differential.py}          & 3 & Act 2 \#6 \\
-\texttt{test\_concurrency\_isolation.py}& 2 & Act 2 \#7 \\
-\texttt{test\_negative.py}              & 4 & Act 2 \#8 \\
-\texttt{test\_properties.py}            & 8 & Act 3 (Hypothesis) \\
-\texttt{test\_calibration.py}           & 3 & Act 3 (calibration) \\
-\texttt{test\_stat\_harness.py}         & 31 & Act 3 (math pins) \\
+\texttt{test\_contract.py}              & 8 & Contract \#1 \\
+\texttt{test\_streaming\_protocol.py}   & 6 & Protocol \#2 \\
+\texttt{test\_param\_honoring.py}       & 9 & Parameter \#3 \\
+\texttt{test\_determinism.py}           & 2 & Determinism \#4 \\
+\texttt{test\_stat\_regression.py}      & 5 & Perf regression \#5 \\
+\texttt{test\_differential.py}          & 3 & Differential \#6 \\
+\texttt{test\_concurrency\_isolation.py}& 2 & Isolation \#7 \\
+\texttt{test\_negative.py}              & 4 & Negative \#8 \\
+\texttt{test\_properties.py}            & 8 & Property-based (Hypothesis) \\
+\texttt{test\_calibration.py}           & 3 & Calibration \\
+\texttt{test\_stat\_harness.py}         & 31 & Statistical math pins \\
 \midrule
 All pre-existing suites                & 103 & baseline \\
 \midrule
