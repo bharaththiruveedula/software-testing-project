@@ -186,16 +186,18 @@ Invalid bearer\,$\Rightarrow$\,401; malformed JSON\,$\Rightarrow$\,4xx
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}[font=\scriptsize]
-  \draw[->] (0,0) -- (7.5,0) node[right] {single$\rightarrow$multi backend};
-  \draw[->] (0,0) -- (0,4) node[above] {structural$\rightarrow$behavioural};
+  \draw[->] (0,0) -- (6.8,0);
+  \node[below,font=\tiny] at (3.4,-0.1) {single$\rightarrow$multi backend};
+  \draw[->] (0,0) -- (0,4);
+  \node[above,font=\tiny] at (0,4) {structural$\rightarrow$behavioural};
   \foreach \x/\y/\l in
     {0.8/0.5/{Contract},
      2.1/0.6/{Protocol},
      0.9/2.2/{Determinism},
      2.3/2.4/{Parameter},
-     5.6/2.8/{Differential},
-     4.2/3.4/{Perf regression},
-     4.4/1.4/{Isolation},
+     5.3/2.8/{Differential},
+     4.0/3.4/{Perf regression},
+     4.2/1.4/{Isolation},
      2.4/3.6/{Negative}} {
     \node[draw,rounded corners=2pt,fill=yellow!20,inner sep=2pt] at (\x,\y) {\l};
   }
