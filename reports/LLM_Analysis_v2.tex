@@ -442,11 +442,11 @@ Three observations:
     \texttt{parse\_sse\_stream} helper---taking an iterable of byte
     chunks and yielding \texttt{SSEEvent} objects---makes the parser
     independent of the HTTP transport and drivable by property-based
-    tests. Hypothesis exposed a subtlety where Python's
-    \texttt{str.splitlines} treats \texttt{U+001E} (record separator)
-    and similar control characters as line boundaries while the SSE
-    grammar does not; the test strategy's alphabet was tightened
-    accordingly.
+    tests. Hypothesis exposed a subtlety: the Python standard
+    library's \texttt{str.\allowbreak splitlines} treats
+    \texttt{U+001E} (record separator) and similar control characters
+    as line boundaries while the SSE grammar does not, so the test
+    strategy's alphabet was tightened accordingly.
   \item \textbf{Statistical regression harness.} Percentile,
     percentile-method bootstrap CI, and continuity-corrected
     Mann--Whitney $U$ with tie correction, implemented against the
